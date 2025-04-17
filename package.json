@@ -6,7 +6,7 @@
   "publisher": "juanjo-LH",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tu-usuario/vscode-warp-terminal"
+    "url": "https://github.com/JuanJLH/vscode-warp-terminal"
   },
   "icon": "resources/terminal-icon.png",
   "engines": {
