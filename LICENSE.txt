@@ -1,0 +1,19 @@
+Copyright (c) 2025 juanjo-LH. All rights reserved.
+
+RESTRICTED LICENSE AGREEMENT
+
+This VS Code extension is proprietary software protected by copyright laws.
+
+Due to the sensitive nature of this extension, which executes terminal commands and has access to command-line interfaces, additional security restrictions apply to help ensure user safety and prevent malicious modifications.
+
+Terms of Use:
+
+1. End users may install and use this extension in their development environment.
+2. Redistribution, modification, or reverse engineering of this extension without explicit written permission from the copyright owner is prohibited.
+3. To request permission to modify or distribute this extension, contact: juan.lazo@uni.pe
+4. The copyright owner is not liable for any direct, indirect, incidental, or consequential damages that may result from the use of this extension.
+
+Security Notice:
+This extension interacts with system terminals and can execute commands. The restricted license helps maintain integrity and prevents unauthorized modifications that could potentially introduce security vulnerabilities.
+
+This extension is provided "as is", without warranty of any kind, express or implied.

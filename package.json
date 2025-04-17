@@ -1,0 +1,142 @@
+{
+  "name": "terminal-manager",
+  "displayName": "Terminal Manager",
+  "description": "Manage terminals with predefined commands in VS Code for Windows, macOS, and Linux",
+  "version": "0.0.1",
+  "publisher": "juanjo-LH",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/vscode-warp-terminal"
+  },
+  "icon": "resources/terminal-icon.png",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets"
+  ],
+  "keywords": [
+    "terminal",
+    "powershell",
+    "bash",
+    "zsh",
+    "comando",
+    "automatización"
+  ],
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-terminal.openTerminal",
+        "title": "Open PowerShell Terminal"
+      },
+      {
+        "command": "vscode-terminal.createTerminal",
+        "title": "Crear nueva terminal PowerShell",
+        "icon": "$(add)"
+      },
+      {
+        "command": "vscode-terminal.configureTerminalCommands",
+        "title": "Configurar comandos iniciales",
+        "icon": "$(code)"
+      },
+      {
+        "command": "vscode-terminal.renameTerminal",
+        "title": "Renombrar",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "vscode-terminal.deleteTerminal",
+        "title": "Eliminar",
+        "icon": "$(trash)"
+      }
+    ],
+    "configuration": {
+      "title": "Open Terminal",
+      "properties": {
+        "openTerminal.path": {
+          "type": "string",
+          "default": "",
+          "description": "Ruta al ejecutable de open Terminal (dejar en blanco para usar la instalación predeterminada)"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "open-terminal",
+          "title": "Open Terminal",
+          "icon": "resources/terminal-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "open-terminal": [
+        {
+          "id": "openTerminalView",
+          "name": "Open Terminal",
+          "icon": "resources/terminal-icon.svg"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "vscode-terminal.createTerminal",
+          "when": "view == openTerminalView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "vscode-terminal.configureTerminalCommands",
+          "when": "viewItem == openNamedTerminal",
+          "group": "inline@1",
+          "icon": "$(code)"
+        },
+        {
+          "command": "vscode-terminal.renameTerminal",
+          "when": "viewItem == openNamedTerminal",
+          "group": "inline@2",
+          "icon": "$(edit)"
+        },
+        {
+          "command": "vscode-terminal.deleteTerminal",
+          "when": "viewItem == openNamedTerminal",
+          "group": "inline@3",
+          "icon": "$(trash)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.99.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "eslint": "^9.23.0",
+    "esbuild": "^0.25.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.2",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}
