@@ -1,6 +1,6 @@
 {
-  "name": "terminal-manager",
-  "displayName": "Terminal Manager",
+  "name": "terminal-command-manager",
+  "displayName": "Terminal Manager commands",
   "description": "Manage terminals with predefined commands in VS Code for Windows, macOS, and Linux",
   "version": "0.0.1",
   "publisher": "juanjo-LH",
