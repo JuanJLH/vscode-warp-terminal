@@ -1,13 +1,63 @@
 // Place your settings in this file to overwrite default and user settings.
 {
     "files.exclude": {
-        "out": false, // set this to true to hide the "out" folder with the compiled JS files
-        "dist": false // set this to true to hide the "dist" folder with the compiled JS files
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/.github": true,
+        "out": true,
+        "dist": true
     },
     "search.exclude": {
         "out": true, // set this to false to include "out" folder in search results
         "dist": true // set this to false to include "dist" folder in search results
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-    "typescript.tsc.autoDetect": "off"
+    "typescript.tsc.autoDetect": "off",
+    "hide-files.files": [],
+    "workbench.colorCustomizations": {
+        "editor.lineHighlightBackground": "#FFD700",
+        "editor.selectionBackground": "#87CEEB",
+        "editor.selectionHighlightBackground": "#32CD32",
+        "editor.wordHighlightBackground": "#ffd8b1",
+        "editorCursor.foreground": "#FF4500",
+        "[*Monokai*]": {
+            "editor.lineHighlightBackground": "#444444",
+            "editor.selectionBackground": "#264F78",
+            "editor.selectionHighlightBackground": "#3A3D41",
+            "editor.wordHighlightBackground": "#333366",
+            "editorCursor.foreground": "#FFD700"
+        },
+        "[*Orange*]": {
+            "editor.lineHighlightBackground": "#444444",
+            "editor.selectionBackground": "#264F78",
+            "editor.selectionHighlightBackground": "#3A3D41",
+            "editor.wordHighlightBackground": "#333366",
+            "editorCursor.foreground": "#FFD700"
+        },
+        "[Noctis Viola]": {
+            "editor.lineHighlightBackground": "#444444",
+            "editor.selectionBackground": "#264F78",
+            "editor.selectionHighlightBackground": "#3A3D41",
+            "editor.wordHighlightBackground": "#333366",
+            "editorCursor.foreground": "#FFD700"
+        },
+        "[*Modern Light*]": {
+            "editor.lineHighlightBackground": "#FFD700",
+            "editor.selectionBackground": "#87CEEB",
+            "editor.selectionHighlightBackground": "#32CD32",
+            "editor.wordHighlightBackground": "#ffd8b1",
+            "editorCursor.foreground": "#FF4500"
+        },
+        "[*Autumn*]": {
+            "editor.lineHighlightBackground": "#444444",
+            "editor.selectionBackground": "#264F78",
+            "editor.selectionHighlightBackground": "#3A3D41",
+            "editor.wordHighlightBackground": "#333366",
+            "editorCursor.foreground": "#FFD700"
+        }
+    }
 }

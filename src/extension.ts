@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { Localization } from './localization';
 
-// Clase Logger para manejar logs
+// Logger class for handling logs
 class Logger {
   static error(message: string, error?: any): void {
     console.error(message, error);
@@ -19,25 +19,25 @@ class Logger {
   }
 }
 
-// Interfaz para representar una terminal guardada
+// Interface to represent a saved terminal
 interface SavedTerminal {
   name: string;
   workingDirectory?: string;
-  commands?: string[]; // Nombre unificado en inglés
-  cerrar?: string;     // Nueva propiedad para indicar si cerrar la terminal
+  commands?: string[]; // Unified name in English
+  cerrar?: string;     // Property to indicate if terminal should close
 }
 
-// Crear una interfaz para el formato del archivo JSON
+// Interface for JSON file format
 interface TerminalJsonConfig {
   name: string;
   workingDirectory?: string;
   comandos?: string[];
-  startupCommands?: string[]; // Añadido para compatibilidad con configuraciones antiguas
-  cerrar?: string;            // Nueva propiedad para indicar si cerrar la terminal
+  startupCommands?: string[]; // Added for compatibility with old configurations
+  cerrar?: string;            // Property to indicate if terminal should close
 }
 
-// Clase para manejar la configuración de terminales
-class TerminalConfigManager {
+// Class for managing terminal configurations
+export class TerminalConfigManager {
   public configFilePath: string | undefined;
 
   constructor() {
@@ -49,15 +49,15 @@ class TerminalConfigManager {
       const vscodePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vscode');
 
       try {
-        // Crear directorio .vscode si no existe
+        // Create .vscode directory if it doesn't exist
         if (!fs.existsSync(vscodePath)) {
           fs.mkdirSync(vscodePath, { recursive: true });
         }
 
         this.configFilePath = path.join(vscodePath, 'powershell-terminals.json');
       } catch (error) {
-        console.error(`Error al crear directorio .vscode: ${error}`);
-        vscode.window.showErrorMessage('No se pudo inicializar la configuración de terminales');
+        console.error(`Error creating .vscode directory: ${error}`);
+        vscode.window.showErrorMessage(Localization.errorInitializingTerminalConfig);
       }
     }
   }
@@ -68,35 +68,35 @@ class TerminalConfigManager {
         const data = fs.readFileSync(this.configFilePath, 'utf8');
         const jsonTerminals = JSON.parse(data);
 
-        console.log('Cargando terminales desde JSON:', jsonTerminals);
+        console.log('Loading terminals from JSON:', jsonTerminals);
 
-        // Transformar con mejor manejo de los comandos
+        // Transform with better command handling
         const terminals = jsonTerminals.map((terminal: any) => {
           const result: SavedTerminal = {
             name: terminal.name,
             workingDirectory: terminal.workingDirectory
           };
 
-          // Detectar comandos y asignarlos a commands con mayor prioridad a 'comandos'
+          // Detect commands and assign them to commands with higher priority to 'comandos'
           if (terminal.comandos && Array.isArray(terminal.comandos)) {
-            result.commands = [...terminal.comandos]; // Usar copia para evitar referencias
-            console.log(`Terminal "${terminal.name}" tiene ${terminal.comandos.length} comandos en propiedad 'comandos'`);
+            result.commands = [...terminal.comandos]; // Use copy to avoid references
+            console.log(`Terminal "${terminal.name}" has ${terminal.comandos.length} commands in 'comandos' property`);
           } else if (terminal.startupCommands && Array.isArray(terminal.startupCommands)) {
             result.commands = [...terminal.startupCommands];
-            console.log(`Terminal "${terminal.name}" tiene ${terminal.startupCommands.length} comandos en 'startupCommands'`);
+            console.log(`Terminal "${terminal.name}" has ${terminal.startupCommands.length} commands in 'startupCommands'`);
           }
 
-          // Cargar la propiedad cerrar (por defecto "no")
+          // Load the cerrar property (default "no")
           result.cerrar = terminal.cerrar || 'no';
 
           return result;
         });
 
-        console.log('Terminales cargadas y transformadas:', terminals);
+        console.log('Terminals loaded and transformed:', terminals);
         return terminals;
       }
     } catch (error) {
-      console.error('Error al cargar las configuraciones de terminales:', error);
+      console.error('Error loading terminal configurations:', error);
     }
     return [];
   }
@@ -104,15 +104,15 @@ class TerminalConfigManager {
   public saveTerminals(terminals: SavedTerminal[]): void {
     try {
       if (this.configFilePath) {
-        // Convertir el formato en memoria al formato JSON
+        // Convert in-memory format to JSON format
         const jsonTerminals = terminals.map(terminal => {
           const jsonTerminal: any = {
             name: terminal.name,
             workingDirectory: terminal.workingDirectory,
-            cerrar: terminal.cerrar || 'no' // Por defecto "no" si no está definido
+            cerrar: terminal.cerrar || 'no' // Default "no" if not defined
           };
 
-          // Usar 'comandos' en lugar de 'commands' para el archivo JSON
+          // Use 'comandos' instead of 'commands' for JSON file
           if (terminal.commands && terminal.commands.length > 0) {
             jsonTerminal.comandos = terminal.commands;
           }
@@ -121,10 +121,10 @@ class TerminalConfigManager {
         });
 
         fs.writeFileSync(this.configFilePath, JSON.stringify(jsonTerminals, null, 2), 'utf8');
-        console.log('Terminales guardadas en JSON:', jsonTerminals);
+        console.log('Terminals saved to JSON:', jsonTerminals);
       }
     } catch (error) {
-      console.error('Error al guardar las configuraciones de terminales:', error);
+      console.error('Error saving terminal configurations:', error);
     }
   }
 
@@ -157,20 +157,20 @@ class TerminalConfigManager {
     const terminal = terminals.find(t => t.name === name);
 
     if (terminal) {
-      // Guardar los comandos explícitamente, incluso si es un array vacío
+      // Save commands explicitly, even if it's an empty array
       terminal.commands = commands.length > 0 ? commands : undefined;
 
-      // Guardar en el archivo JSON
+      // Save to JSON file
       this.saveTerminals(terminals);
-      console.log(`Comandos actualizados para terminal "${name}": ${commands.length} comandos`);
+      console.log(vscode.l10n.t(Localization.commandsUpdated, name, commands.length.toString()));
 
-      // Si hay comandos, mostrarlos en la consola para depuración
+      // If there are commands, show them in console for debugging
       if (commands.length > 0) {
-        console.log('Comandos guardados:');
+        console.log(Localization.commandsSaved);
         commands.forEach((cmd, i) => console.log(`  ${i + 1}. ${cmd}`));
       }
     } else {
-      console.error(`No se encontró la terminal "${name}" para actualizar comandos`);
+      console.error(vscode.l10n.t(Localization.terminalNotFound, name));
     }
 
     return terminals;
@@ -189,282 +189,281 @@ class TerminalConfigManager {
           return;
         }
       }
-      throw new Error(`Terminal "${name}" no encontrado`);
+      throw new Error(vscode.l10n.t(Localization.terminalNotFound, name));
     } catch (error) {
-      Logger.error('Error al actualizar propiedad de terminal', error);
+      Logger.error(Localization.errorUpdatingTerminalProperty, error);
       throw error;
     }
   }
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  // Crear instancia del administrador de configuraciones
-  const terminalConfigManager = new TerminalConfigManager();
+    // Create configuration manager instance
+    const terminalConfigManager = new TerminalConfigManager();
 
-  // Crear proveedor de datos para la vista de árbol
-  const treeDataProvider = new TerminalTreeDataProvider(terminalConfigManager);
+    // Create data provider for tree view
+    const treeDataProvider = new TerminalTreeDataProvider(terminalConfigManager);
 
-  // Comando para abrir PowerShell
-  let openTerminalCommand = vscode.commands.registerCommand('vscode-terminal.openTerminal', async (terminal?: SavedTerminal) => {
-    try {
-      // Si se recibió un terminal, buscar su configuración actualizada (por si cambió)
-      if (terminal && terminal.name) {
-        // Guardar el nombre en una constante local para usarlo después
-        const terminalName = terminal.name;
+    // Command to open PowerShell
+    let openTerminalCommand = vscode.commands.registerCommand('vscode-terminal.openTerminal', async (terminal?: SavedTerminal) => {
+      try {
+        // If a terminal was received, look for its updated configuration (in case it changed)
+        if (terminal && terminal.name) {
+          // Save the name in a local constant to use later
+          const terminalName = terminal.name;
 
-        const updatedTerminals = terminalConfigManager.loadTerminalsFromJson();
-        const freshTerminal = updatedTerminals.find(t => t.name === terminalName);
+          const updatedTerminals = terminalConfigManager.loadTerminalsFromJson();
+          const freshTerminal = updatedTerminals.find(t => t.name === terminalName);
 
-        if (freshTerminal) {
-          // Usar la constante local en lugar de terminal.name
-          console.log(`Terminal actualizado para "${terminalName}"`);
-          terminal = freshTerminal;
+          if (freshTerminal) {
+            // Use the local constant instead of terminal.name
+            console.log(vscode.l10n.t(Localization.terminalUpdated, terminalName));
+            terminal = freshTerminal;
+          }
         }
-      }
 
-      // Obtener la ruta del espacio de trabajo actual
-      let workspaceFolder = '';
-      if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-        workspaceFolder = vscode.workspace.workspaceFolders[0].uri.fsPath;
-      } else {
-        workspaceFolder = os.homedir();
-      }
-
-      // Si se proporciona una terminal específica, usar su directorio personalizado si existe
-      if (terminal && terminal.workingDirectory) {
-        if (fs.existsSync(terminal.workingDirectory)) {
-          workspaceFolder = terminal.workingDirectory;
+        // Get current workspace path
+        let workspaceFolder = '';
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+          workspaceFolder = vscode.workspace.workspaceFolders[0].uri.fsPath;
         } else {
-          vscode.window.showWarningMessage(`El directorio ${terminal.workingDirectory} no existe. Se usará el directorio del proyecto.`);
+          workspaceFolder = os.homedir();
         }
+
+        // If a specific terminal is provided, use its custom directory if it exists
+        if (terminal && terminal.workingDirectory) {
+          if (fs.existsSync(terminal.workingDirectory)) {
+            workspaceFolder = terminal.workingDirectory;
+          } else {
+            vscode.window.showWarningMessage(vscode.l10n.t(Localization.directoryNotExists, terminal.workingDirectory));
+          }
+        }
+
+        // Show detailed information for debugging
+        if (terminal && terminal.commands) {
+          console.log(`Opening terminal "${terminal.name}" with ${terminal.commands.length} commands:`);
+          terminal.commands.forEach((cmd, i) => console.log(`  ${i + 1}. ${cmd}`));
+        }
+
+        // Execute PowerShell in VS Code integrated terminal
+        executeTerminal(terminal, workspaceFolder);
+
+        // Show information message
+        const terminalName = terminal ? ` "${terminal.name}"` : '';
+        vscode.window.showInformationMessage(vscode.l10n.t(Localization.terminalOpenedAt, terminalName, workspaceFolder));
+      } catch (error) {
+        vscode.window.showErrorMessage(`${Localization.errorOpeningTerminal}: ${error instanceof Error ? error.message : String(error)}`);
       }
+    });
 
-      // Mostrar información detallada para depuración
-      if (terminal && terminal.commands) {
-        console.log(`Abriendo terminal "${terminal.name}" con ${terminal.commands.length} comandos:`);
-        terminal.commands.forEach((cmd, i) => console.log(`  ${i + 1}. ${cmd}`));
-      }
-
-      // Ejecutar PowerShell en el terminal integrado de VS Code
-      executeTerminal(terminal, workspaceFolder);
-
-      // Mostrar mensaje de información
-      const terminalName = terminal ? ` "${terminal.name}"` : '';
-      vscode.window.showInformationMessage(`Terminal${terminalName} abierto en: ${workspaceFolder}`);
-    } catch (error) {
-      vscode.window.showErrorMessage(`Error al abrir terminal: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  });
-
-  // Comando para crear nueva terminal
-  let createTerminalCommand = vscode.commands.registerCommand('vscode-terminal.createTerminal', async () => {
-    try {
-      // Detectar sistema operativo para etiquetas
-      const platform = os.platform();
-      const isWindows = platform === 'win32';
-      const terminalLabel = isWindows ? 'PowerShell' : (platform === 'darwin' ? 'Terminal' : 'Bash');
-      
-      // Mostrar diálogo para ingresar nombre
-      const name = await vscode.window.showInputBox({
-        prompt: `Ingrese un nombre para la terminal ${terminalLabel}`,
-        placeHolder: 'Nombre de la terminal'
-      });
-
-      if (!name) {
-        vscode.window.showInformationMessage('Creación de terminal cancelada');
-        return;
-      }
-
-      // Preguntar si desea especificar un directorio de trabajo personalizado
-      const useCustomDir = await vscode.window.showQuickPick(['Usar directorio del proyecto', 'Especificar directorio personalizado'], {
-        placeHolder: 'Seleccione el directorio de trabajo'
-      });
-
-      let workingDirectory: string | undefined = undefined;
-
-      if (useCustomDir === 'Especificar directorio personalizado') {
-        const folderUri = await vscode.window.showOpenDialog({
-          canSelectFiles: false,
-          canSelectFolders: true,
-          canSelectMany: false,
-          openLabel: 'Seleccionar directorio de trabajo'
+    // Command to create new terminal
+    let createTerminalCommand = vscode.commands.registerCommand('vscode-terminal.createTerminal', async () => {
+      try {
+        // Detect operating system for labels
+        const platform = os.platform();
+        const terminalLabel = Localization.getPlatformTerminalLabel(platform);
+        
+        // Show dialog to enter name
+        const name = await vscode.window.showInputBox({
+          prompt: vscode.l10n.t(Localization.enterTerminalName, terminalLabel),
+          placeHolder: Localization.terminalNamePlaceholder
         });
 
-        if (folderUri && folderUri.length > 0) {
-          workingDirectory = folderUri[0].fsPath;
-        }
-      }
-
-      // Guardar la terminal
-      terminalConfigManager.addTerminal(name, workingDirectory);
-      treeDataProvider.refresh();
-      vscode.window.showInformationMessage(`Terminal "${name}" creada con éxito`);
-    } catch (error) {
-      vscode.window.showErrorMessage(`Error al crear terminal: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  });
-
-  // Comando para configurar comandos de inicio editando directamente el JSON
-  let configureTerminalCommandsCommand = vscode.commands.registerCommand('vscode-terminal.configureTerminalCommands', async (item: TerminalItem) => {
-    try {
-      if (item.terminal && terminalConfigManager.configFilePath) {
-        // Guardar una referencia segura al terminal
-        const terminal = item.terminal;
-
-        // Cargar el JSON actual o crear uno nuevo si no existe
-        let currentConfig: TerminalJsonConfig[] = [];
-        try {
-          if (fs.existsSync(terminalConfigManager.configFilePath)) {
-            const jsonContent = fs.readFileSync(terminalConfigManager.configFilePath, 'utf8');
-            currentConfig = JSON.parse(jsonContent);
-          }
-        } catch (err) {
-          // Si hay error en la lectura, comenzar con un array vacío
-          currentConfig = [];
+        if (!name) {
+          vscode.window.showInformationMessage(Localization.terminalCreationCancelled);
+          return;
         }
 
-        // Buscar el terminal actual en la configuración
-        const terminalIndex = currentConfig.findIndex(t => t.name === terminal.name);
+        // Ask if user wants to specify a custom working directory
+        const useCustomDir = await vscode.window.showQuickPick([Localization.useProjectDirectory, Localization.specifyCustomDirectory], {
+          placeHolder: Localization.selectWorkingDirectory
+        });
 
-        // Si no existe, agregarlo
-        if (terminalIndex === -1) {
-          currentConfig.push({
-            name: terminal.name,
-            workingDirectory: terminal.workingDirectory,
-            comandos: [] // Usar 'comandos' en lugar de 'commands'
+        let workingDirectory: string | undefined = undefined;
+
+        if (useCustomDir === Localization.specifyCustomDirectory) {
+          const folderUri = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: Localization.selectWorkingDirectoryLabel
           });
-        }
-        // Si no tiene la propiedad 'comandos', agregarla
-        else if (!currentConfig[terminalIndex].comandos) {
-          currentConfig[terminalIndex].comandos = [];
-        }
-        // Si tiene startupCommands pero no comandos, migrar
-        else if (currentConfig[terminalIndex].startupCommands && !currentConfig[terminalIndex].comandos) {
-          currentConfig[terminalIndex].comandos = currentConfig[terminalIndex].startupCommands;
-          delete currentConfig[terminalIndex].startupCommands;
-        }
 
-        // Guardar la configuración actualizada
-        fs.writeFileSync(terminalConfigManager.configFilePath, JSON.stringify(currentConfig, null, 2), 'utf8');
-
-        // Mostrar el archivo para edición
-        const doc = await vscode.workspace.openTextDocument(terminalConfigManager.configFilePath);
-        const editor = await vscode.window.showTextDocument(doc);
-
-        // Mostrar mensaje informativo
-        vscode.window.showInformationMessage(
-          `Editando configuración para "${terminal.name}". Busca la sección "comandos" para agregar comandos de inicio.`,
-          'OK'
-        );
-
-        // Escuchar cuando se cierra el documento
-        const disposable = vscode.workspace.onDidCloseTextDocument(async closedDoc => {
-          if (closedDoc.uri.fsPath === terminalConfigManager.configFilePath) {
-            try {
-              // Recargar las terminales después de la edición
-              terminalConfigManager.loadTerminalsFromJson();
-              treeDataProvider.refresh();
-
-              // Mostrar mensaje de éxito
-              vscode.window.showInformationMessage(
-                `Configuración actualizada para "${terminal.name}"`
-              );
-            } catch (error) {
-              console.error('Error al procesar configuración JSON:', error);
-              vscode.window.showErrorMessage(`Error en el formato JSON: ${error instanceof Error ? error.message : String(error)}`);
-            }
-
-            // Eliminar el event listener
-            disposable.dispose();
+          if (folderUri && folderUri.length > 0) {
+            workingDirectory = folderUri[0].fsPath;
           }
-        });
-
-        // Agregar el disposable al contexto para limpieza
-        context.subscriptions.push(disposable);
-      }
-    } catch (error) {
-      vscode.window.showErrorMessage(`Error al configurar comandos: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  });
-
-  // Comando para renombrar terminal
-  let renameTerminalCommand = vscode.commands.registerCommand('vscode-terminal.renameTerminal', async (item: TerminalItem) => {
-    try {
-      if (item.terminal) {
-        const newName = await vscode.window.showInputBox({
-          prompt: 'Ingrese nuevo nombre para la terminal',
-          value: item.terminal.name
-        });
-
-        if (newName && newName !== item.terminal.name) {
-          terminalConfigManager.renameTerminal(item.terminal.name, newName);
-          treeDataProvider.refresh();
-          vscode.window.showInformationMessage(`Terminal renombrada a "${newName}"`);
         }
+
+        // Save the terminal
+        terminalConfigManager.addTerminal(name, workingDirectory);
+        treeDataProvider.refresh();
+        vscode.window.showInformationMessage(vscode.l10n.t(Localization.terminalCreatedSuccess, name));
+      } catch (error) {
+        vscode.window.showErrorMessage(`${Localization.errorCreatingTerminal}: ${error instanceof Error ? error.message : String(error)}`);
       }
-    } catch (error) {
-      vscode.window.showErrorMessage(`Error al renombrar terminal: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  });
+    });
 
-  // Comando para eliminar terminal
-  let deleteTerminalCommand = vscode.commands.registerCommand('vscode-terminal.deleteTerminal', async (item: TerminalItem) => {
-    try {
-      if (item.terminal) {
-        const confirmed = await vscode.window.showQuickPick(['Sí', 'No'], {
-          placeHolder: `¿Está seguro de eliminar la terminal "${item.terminal.name}"?`
-        });
+    // Command to configure startup commands by editing JSON directly
+    let configureTerminalCommandsCommand = vscode.commands.registerCommand('vscode-terminal.configureTerminalCommands', async (item: TerminalItem) => {
+      try {
+        if (item.terminal && terminalConfigManager.configFilePath) {
+          // Save a safe reference to the terminal
+          const terminal = item.terminal;
 
-        if (confirmed === 'Sí') {
-          terminalConfigManager.removeTerminal(item.terminal.name);
-          treeDataProvider.refresh();
-          vscode.window.showInformationMessage(`Terminal "${item.terminal.name}" eliminada`);
+          // Load current JSON or create new one if it doesn't exist
+          let currentConfig: TerminalJsonConfig[] = [];
+          try {
+            if (fs.existsSync(terminalConfigManager.configFilePath)) {
+              const jsonContent = fs.readFileSync(terminalConfigManager.configFilePath, 'utf8');
+              currentConfig = JSON.parse(jsonContent);
+            }
+          } catch (err) {
+            // If there's an error reading, start with empty array
+            currentConfig = [];
+          }
+
+          // Find current terminal in configuration
+          const terminalIndex = currentConfig.findIndex(t => t.name === terminal.name);
+
+          // If it doesn't exist, add it
+          if (terminalIndex === -1) {
+            currentConfig.push({
+              name: terminal.name,
+              workingDirectory: terminal.workingDirectory,
+              comandos: [] // Use 'comandos' instead of 'commands'
+            });
+          }
+          // If it doesn't have 'comandos' property, add it
+          else if (!currentConfig[terminalIndex].comandos) {
+            currentConfig[terminalIndex].comandos = [];
+          }
+          // If it has startupCommands but not comandos, migrate
+          else if (currentConfig[terminalIndex].startupCommands && !currentConfig[terminalIndex].comandos) {
+            currentConfig[terminalIndex].comandos = currentConfig[terminalIndex].startupCommands;
+            delete currentConfig[terminalIndex].startupCommands;
+          }
+
+          // Save updated configuration
+          fs.writeFileSync(terminalConfigManager.configFilePath, JSON.stringify(currentConfig, null, 2), 'utf8');
+
+          // Show file for editing
+          const doc = await vscode.workspace.openTextDocument(terminalConfigManager.configFilePath);
+          const editor = await vscode.window.showTextDocument(doc);
+
+          // Show informative message
+          vscode.window.showInformationMessage(
+            vscode.l10n.t(Localization.editingConfiguration, terminal.name),
+            'OK'
+          );
+
+          // Listen for document close
+          const disposable = vscode.workspace.onDidCloseTextDocument(async (closedDoc: vscode.TextDocument) => {
+            if (closedDoc.uri.fsPath === terminalConfigManager.configFilePath) {
+              try {
+                // Reload terminals after editing
+                terminalConfigManager.loadTerminalsFromJson();
+                treeDataProvider.refresh();
+
+                // Show success message
+                vscode.window.showInformationMessage(
+                  vscode.l10n.t(Localization.configurationUpdated, terminal.name)
+                );
+              } catch (error) {
+                console.error('Error processing JSON configuration:', error);
+                vscode.window.showErrorMessage(`${Localization.errorJsonFormat}: ${error instanceof Error ? error.message : String(error)}`);
+              }
+
+              // Remove event listener
+              disposable.dispose();
+            }
+          });
+
+          // Add disposable to context for cleanup
+          context.subscriptions.push(disposable);
         }
+      } catch (error) {
+        vscode.window.showErrorMessage(`${Localization.errorConfiguringCommands}: ${error instanceof Error ? error.message : String(error)}`);
       }
-    } catch (error) {
-      vscode.window.showErrorMessage(`Error al eliminar terminal: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  });
+    });
 
-  // Registrar los comandos
-  context.subscriptions.push(openTerminalCommand);
-  context.subscriptions.push(createTerminalCommand);
-  context.subscriptions.push(configureTerminalCommandsCommand);
-  context.subscriptions.push(renameTerminalCommand);
-  context.subscriptions.push(deleteTerminalCommand);
+    // Command to rename terminal
+    let renameTerminalCommand = vscode.commands.registerCommand('vscode-terminal.renameTerminal', async (item: TerminalItem) => {
+      try {
+        if (item.terminal) {
+          const newName = await vscode.window.showInputBox({
+            prompt: Localization.enterNewTerminalName,
+            value: item.terminal.name
+          });
 
-  // Registrar vista para el contenedor
-  const terminalView = vscode.window.createTreeView('openTerminalView', {
-    treeDataProvider: treeDataProvider
-  });
+          if (newName && newName !== item.terminal.name) {
+            terminalConfigManager.renameTerminal(item.terminal.name, newName);
+            treeDataProvider.refresh();
+            vscode.window.showInformationMessage(vscode.l10n.t(Localization.terminalRenamed, newName));
+          }
+        }
+      } catch (error) {
+        vscode.window.showErrorMessage(`${Localization.errorRenamingTerminal}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    });
 
-  context.subscriptions.push(terminalView);
+    // Command to delete terminal
+    let deleteTerminalCommand = vscode.commands.registerCommand('vscode-terminal.deleteTerminal', async (item: TerminalItem) => {
+      try {
+        if (item.terminal) {
+          const confirmed = await vscode.window.showQuickPick([Localization.yes, Localization.no], {
+            placeHolder: vscode.l10n.t(Localization.confirmDeleteTerminal, item.terminal.name)
+          });
+
+          if (confirmed === Localization.yes) {
+            terminalConfigManager.removeTerminal(item.terminal.name);
+            treeDataProvider.refresh();
+            vscode.window.showInformationMessage(vscode.l10n.t(Localization.terminalDeleted, item.terminal.name));
+          }
+        }
+      } catch (error) {
+        vscode.window.showErrorMessage(`${Localization.errorDeletingTerminal}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    });
+
+    // Register commands
+    context.subscriptions.push(openTerminalCommand);
+    context.subscriptions.push(createTerminalCommand);
+    context.subscriptions.push(configureTerminalCommandsCommand);
+    context.subscriptions.push(renameTerminalCommand);
+    context.subscriptions.push(deleteTerminalCommand);
+
+    // Register view for container
+    const terminalView = vscode.window.createTreeView('openTerminalView', {
+      treeDataProvider: treeDataProvider
+    });
+
+    context.subscriptions.push(terminalView);
 }
 
-// Función simplificada para ejecutar comandos directamente
+// Simplified function to execute commands directly
 function executeTerminal(terminal?: SavedTerminal, workspaceFolder?: string): void {
-  // Obtener el nombre y directorio de la terminal
-  const tituloVentana = terminal ? terminal.name : "Terminal";
-  const rutaDestino = workspaceFolder || '';
+  // Get terminal name and directory
+  const windowTitle = terminal ? terminal.name : Localization.terminal;
+  const targetPath = workspaceFolder || '';
 
-  // Obtener los comandos configurados para esta terminal
-  const comandos = terminal?.commands || [];
+  // Get configured commands for this terminal
+  const commands = terminal?.commands || [];
   
-  // Verificar si se debe cerrar la terminal al terminar (por defecto "no")
-  const cerrarTerminal = terminal?.cerrar === 'si';
+  // Check if terminal should close when finished (default "no")
+  const closeTerminal = terminal?.cerrar === 'si';
 
-  // Detectar sistema operativo
+  // Detect operating system
   const platform = os.platform();
   let shellPath: string;
   let isWindows = platform === 'win32';
   let isMac = platform === 'darwin';
   let isLinux = !isWindows && !isMac;
 
-  // Configurar la shell adecuada según el sistema operativo
+  // Configure appropriate shell based on operating system
   if (isWindows) {
     shellPath = 'powershell.exe';
   } else if (isMac) {
-    // En macOS, intentar usar zsh primero; si no está disponible, usar bash
+    // On macOS, try to use zsh first; if not available, use bash
     try {
       if (fs.existsSync('/bin/zsh')) {
         shellPath = '/bin/zsh';
@@ -472,83 +471,83 @@ function executeTerminal(terminal?: SavedTerminal, workspaceFolder?: string): vo
         shellPath = '/bin/bash';
       }
     } catch (error) {
-      shellPath = '/bin/bash'; // Por defecto
+      shellPath = '/bin/bash'; // Default
     }
   } else {
-    // Para Linux y otros sistemas, usar bash
+    // For Linux and other systems, use bash
     shellPath = '/bin/bash';
   }
 
-  console.log(`=== EJECUTANDO TERMINAL VS CODE "${tituloVentana}" ===`);
-  console.log(`Sistema: ${platform}`);
-  console.log(`Shell: ${shellPath}`);
-  console.log(`Directorio: ${rutaDestino}`);
-  console.log(`Comandos a ejecutar: ${comandos.length}`);
-  console.log(`Cerrar al terminar: ${cerrarTerminal ? 'Sí' : 'No'}`);
+  console.log(vscode.l10n.t(Localization.executingTerminal, windowTitle));
+  console.log(`${Localization.system}: ${platform}`);
+  console.log(`${Localization.shell}: ${shellPath}`);
+  console.log(`${Localization.directory}: ${targetPath}`);
+  console.log(`${Localization.commandsToExecute}: ${commands.length}`);
+  console.log(`${Localization.closeOnFinish}: ${closeTerminal ? Localization.yes : Localization.no}`);
 
-  // Crear una nueva terminal integrada en VS Code
+  // Create new integrated terminal in VS Code
   const vsCodeTerminal = vscode.window.createTerminal({
-    name: tituloVentana,
+    name: windowTitle,
     shellPath: shellPath,
-    cwd: rutaDestino
+    cwd: targetPath
   });
 
-  // Mostrar la terminal
+  // Show terminal
   vsCodeTerminal.show();
 
-  // Esperar un momento para que la terminal se inicialice completamente
+  // Wait a moment for terminal to fully initialize
   setTimeout(() => {
-    // Cambiar título y mostrar mensaje según el sistema operativo
+    // Change title and show message according to operating system
     if (isWindows) {
-      vsCodeTerminal.sendText(`$host.UI.RawUI.WindowTitle = '${tituloVentana}'`, true);
+      vsCodeTerminal.sendText(`$host.UI.RawUI.WindowTitle = '${windowTitle}'`, true);
       vsCodeTerminal.sendText(`clear`, true);
-      vsCodeTerminal.sendText(`Write-Host "Terminal: ${tituloVentana}"`, true);
+      vsCodeTerminal.sendText(`Write-Host "${Localization.terminal}: ${windowTitle}"`, true);
     } else {
-      // Para macOS y Linux
-      vsCodeTerminal.sendText(`echo -e "\\033]0;${tituloVentana}\\007"`, true);
+      // For macOS and Linux
+      vsCodeTerminal.sendText(`echo -e "\\033]0;${windowTitle}\\007"`, true);
       vsCodeTerminal.sendText(`clear`, true);
-      vsCodeTerminal.sendText(`echo "Terminal: ${tituloVentana}"`, true);
+      vsCodeTerminal.sendText(`echo "${Localization.terminal}: ${windowTitle}"`, true);
     }
 
-    // Ejecutar comandos configurados si existen
-    if (comandos.length > 0) {
+    // Execute configured commands if they exist
+    if (commands.length > 0) {
       if (isWindows) {
-        vsCodeTerminal.sendText(`Write-Host "Ejecutando ${comandos.length} comandos configurados:"`, true);
+        vsCodeTerminal.sendText(`Write-Host "${vscode.l10n.t(Localization.executingConfiguredCommands, commands.length.toString())}"`, true);
       } else {
-        vsCodeTerminal.sendText(`echo "Ejecutando ${comandos.length} comandos configurados:"`, true);
+        vsCodeTerminal.sendText(`echo "${vscode.l10n.t(Localization.executingConfiguredCommands, commands.length.toString())}"`, true);
       }
 
-      // Ejecutar cada comando directamente
-      comandos.forEach((comando, i) => {
+      // Execute each command directly
+      commands.forEach((command, i) => {
         if (isWindows) {
-          vsCodeTerminal.sendText(`Write-Host "[${i + 1}/${comandos.length}] > ${comando}"`, true);
+          vsCodeTerminal.sendText(`Write-Host "[${i + 1}/${commands.length}] > ${command}"`, true);
         } else {
-          vsCodeTerminal.sendText(`echo "[${i + 1}/${comandos.length}] > ${comando}"`, true);
+          vsCodeTerminal.sendText(`echo "[${i + 1}/${commands.length}] > ${command}"`, true);
         }
-        vsCodeTerminal.sendText(comando, true);
+        vsCodeTerminal.sendText(command, true);
       });
 
       if (isWindows) {
-        vsCodeTerminal.sendText(`Write-Host "Todos los comandos han sido ejecutados."`, true);
+        vsCodeTerminal.sendText(`Write-Host "${Localization.allCommandsExecuted}"`, true);
       } else {
-        vsCodeTerminal.sendText(`echo "Todos los comandos han sido ejecutados."`, true);
+        vsCodeTerminal.sendText(`echo "${Localization.allCommandsExecuted}"`, true);
       }
       
-      // Cerrar la terminal si está configurado para hacerlo
-      if (cerrarTerminal) {
+      // Close terminal if configured to do so
+      if (closeTerminal) {
         if (isWindows) {
-          vsCodeTerminal.sendText(`Write-Host "La terminal se cerrará en 3 segundos..." -ForegroundColor Yellow`, true);
+          vsCodeTerminal.sendText(`Write-Host "${Localization.terminalClosingIn3Seconds}" -ForegroundColor Yellow`, true);
         } else {
-          vsCodeTerminal.sendText(`echo -e "\\033[33mLa terminal se cerrará en 3 segundos...\\033[0m"`, true);
+          vsCodeTerminal.sendText(`echo -e "\\033[33m${Localization.terminalClosingIn3Seconds}\\033[0m"`, true);
         }
         vsCodeTerminal.sendText(`exit`, true);
-        // Esperar un momento para que el usuario vea los resultados antes de cerrar
+        // Wait a moment for user to see results before closing
         setTimeout(() => {
           vsCodeTerminal.dispose();
-        }, 3000); // 3 segundos de espera antes de cerrar
+        }, 3000); // 3 seconds wait before closing
       }
     }
-  }, 1000); // Esperar 1 segundo para asegurar que la terminal esté lista
+  }, 1000); // Wait 1 second to ensure terminal is ready
 }
 
 class TerminalTreeDataProvider implements vscode.TreeDataProvider<TerminalItem> {
@@ -568,53 +567,53 @@ class TerminalTreeDataProvider implements vscode.TreeDataProvider<TerminalItem> 
   getChildren(): TerminalItem[] {
     const items: TerminalItem[] = [];
     
-    // Detectar sistema operativo para etiquetas
+    // Detect operating system for labels
     const platform = os.platform();
-    const isWindows = platform === 'win32';
-    const terminalLabel = isWindows ? 'PowerShell' : (platform === 'darwin' ? 'Terminal' : 'Bash');
+    const terminalLabel = Localization.getPlatformTerminalLabel(platform);
 
-    // Añadir terminal general
+    // Add general terminal
     const openTerminalItem = new TerminalItem(
-      `Abrir ${terminalLabel}`,
+      vscode.l10n.t(Localization.openTerminalLabel, terminalLabel),
       vscode.TreeItemCollapsibleState.None,
       {
         command: 'vscode-terminal.openTerminal',
-        title: `Abrir ${terminalLabel}`,
-        tooltip: `Abrir una nueva terminal ${terminalLabel}`,
+        title: vscode.l10n.t(Localization.openTerminalLabel, terminalLabel),
+        tooltip: vscode.l10n.t(Localization.openTerminalTooltip, terminalLabel),
         arguments: []
       }
     );
     openTerminalItem.iconPath = new vscode.ThemeIcon('terminal');
     items.push(openTerminalItem);
 
-    // Añadir terminales guardadas
+    // Add saved terminals
     const savedTerminals = this.terminalConfigManager.loadTerminalsFromJson();
 
     if (savedTerminals.length > 0) {
-      // Añadir separador
-      const separator = new TerminalItem('Terminales guardadas', vscode.TreeItemCollapsibleState.None);
-      separator.tooltip = 'Terminales guardadas para este proyecto';
+      // Add separator
+      const separator = new TerminalItem(Localization.savedTerminals, vscode.TreeItemCollapsibleState.None);
+      separator.tooltip = Localization.savedTerminalsTooltip;
       items.push(separator);
 
-      // Añadir cada terminal guardada
+      // Add each saved terminal
       savedTerminals.forEach(terminal => {
         const terminalItem = new TerminalItem(
           terminal.name,
           vscode.TreeItemCollapsibleState.None,
           {
             command: 'vscode-terminal.openTerminal',
-            title: 'Abrir terminal',
+            title: Localization.openTerminalCommand,
             tooltip: terminal.commands && terminal.commands.length > 0
-              ? `Comandos: ${terminal.commands.join(', ')}\nDirectorio: ${terminal.workingDirectory || 'directorio del proyecto'}`
-              : `Directorio: ${terminal.workingDirectory || 'directorio del proyecto'}`,
+              ? vscode.l10n.t(Localization.commandsTooltip, terminal.commands.join(', '), terminal.workingDirectory || Localization.projectDirectory)
+              : vscode.l10n.t(Localization.directoryTooltip, terminal.workingDirectory || Localization.projectDirectory),
             arguments: [terminal]
           }
         );
 
-        // Si tiene comandos configurados, mostrar la cantidad como descripción
+        // If it has configured commands, show count as description
         if (terminal.commands && terminal.commands.length > 0) {
-          terminalItem.description = `(${terminal.commands.length} cmds)`;
-          // Usar el icono específico según el SO
+          terminalItem.description = vscode.l10n.t(Localization.commandsCount, terminal.commands.length.toString());
+          // Use specific icon based on OS
+          const isWindows = platform === 'win32';
           terminalItem.iconPath = new vscode.ThemeIcon(isWindows ? 'terminal-powershell' : 'terminal');
         } else {
           terminalItem.iconPath = new vscode.ThemeIcon('terminal-view-icon');
@@ -632,6 +631,10 @@ class TerminalTreeDataProvider implements vscode.TreeDataProvider<TerminalItem> 
 
 class TerminalItem extends vscode.TreeItem {
   terminal?: SavedTerminal;
+  declare iconPath?: vscode.ThemeIcon;
+  declare tooltip?: string;
+  declare description?: string;
+  declare contextValue?: string;
 
   constructor(
     public readonly label: string,
@@ -645,5 +648,5 @@ class TerminalItem extends vscode.TreeItem {
 }
 
 export function deactivate() {
-  // Limpiar recursos si es necesario
+  // Clean up resources if necessary
 }
