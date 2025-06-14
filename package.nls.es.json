@@ -1,0 +1,13 @@
+{
+    "displayName": "Gestor de Comandos de Terminal",
+    "description": "Gestiona terminales con comandos predefinidos en VS Code para Windows, macOS y Linux",
+    "command.openTerminal.title": "Abrir Terminal PowerShell",
+    "command.createTerminal.title": "Crear nuevo terminal PowerShell",
+    "command.configureTerminalCommands.title": "Configurar comandos de inicio",
+    "command.renameTerminal.title": "Renombrar",
+    "command.deleteTerminal.title": "Eliminar",
+    "configuration.title": "Abrir Terminal",
+    "configuration.openTerminal.path.description": "Ruta al ejecutable del Terminal (dejar en blanco para usar la instalación predeterminada)",
+    "viewsContainers.openTerminal.title": "Abrir Terminal",
+    "views.openTerminalView.name": "Abrir Terminal"
+}

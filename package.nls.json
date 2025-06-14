@@ -1,0 +1,13 @@
+{
+    "displayName": "Terminal Manager commands",
+    "description": "Manage terminals with predefined commands in VS Code for Windows, macOS, and Linux",
+    "command.openTerminal.title": "Open PowerShell Terminal",
+    "command.createTerminal.title": "Create new PowerShell terminal",
+    "command.configureTerminalCommands.title": "Configure startup commands",
+    "command.renameTerminal.title": "Rename",
+    "command.deleteTerminal.title": "Delete",
+    "configuration.title": "Open Terminal",
+    "configuration.openTerminal.path.description": "Path to the open Terminal executable (leave blank to use default installation)",
+    "viewsContainers.openTerminal.title": "Open Terminal",
+    "views.openTerminalView.name": "Open Terminal"
+}

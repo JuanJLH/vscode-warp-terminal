@@ -1,6 +1,9 @@
 out
 dist
 node_modules
+.vscode
 .vscode-test/
 *.vsix
+.gitignore
 .vscode/powershell-terminals.json
+folder-alias.json

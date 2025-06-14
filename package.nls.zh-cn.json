@@ -1,0 +1,13 @@
+{
+    "displayName": "终端命令管理器",
+    "description": "在VS Code中管理Windows、macOS和Linux的预定义命令终端",
+    "command.openTerminal.title": "打开PowerShell终端",
+    "command.createTerminal.title": "创建新的PowerShell终端",
+    "command.configureTerminalCommands.title": "配置启动命令",
+    "command.renameTerminal.title": "重命名",
+    "command.deleteTerminal.title": "删除",
+    "configuration.title": "打开终端",
+    "configuration.openTerminal.path.description": "终端可执行文件的路径（留空使用默认安装）",
+    "viewsContainers.openTerminal.title": "打开终端",
+    "views.openTerminalView.name": "打开终端"
+}
